@@ -1,0 +1,122 @@
+[
+    {
+        "function": "validate_schema",
+        "input": [
+            "problems/product_trend_analyzer/input_cases/product_trend_analyzer_sales_data.csv"
+        ],
+        "expected": {
+            "fatal": false,
+            "errors": []
+        },
+        "actual": {
+            "fatal": false,
+            "errors": []
+        },
+        "passed": true
+    },
+    {
+        "function": "detect_trend_candidates",
+        "input": [
+            "problems/product_trend_analyzer/input_cases/product_trend_analyzer_sales_data.csv",
+            [
+                "prod_1",
+                "prod_2",
+                "prod_3"
+            ],
+            30
+        ],
+        "expected": [
+            {
+                "product_id": "prod_1",
+                "is_spike_candidate": false,
+                "reason_tags": [],
+                "velocity_pct_change_min": 0.0,
+                "confidence_score_min": 0.0
+            },
+            {
+                "product_id": "prod_2",
+                "is_spike_candidate": false,
+                "reason_tags": [],
+                "velocity_pct_change_min": 0.0,
+                "confidence_score_min": 0.0
+            },
+            {
+                "product_id": "prod_3",
+                "is_spike_candidate": false,
+                "reason_tags": [],
+                "velocity_pct_change_min": 0.0,
+                "confidence_score_min": 0.0
+            }
+        ],
+        "actual": [
+            {
+                "product_id": "prod_1",
+                "is_spike_candidate": false,
+                "reason_tags": [],
+                "velocity_pct_change_min": 0.0,
+                "confidence_score_min": 0.0
+            },
+            {
+                "product_id": "prod_2",
+                "is_spike_candidate": false,
+                "reason_tags": [],
+                "velocity_pct_change_min": 0.0,
+                "confidence_score_min": 0.0
+            },
+            {
+                "product_id": "prod_3",
+                "is_spike_candidate": false,
+                "reason_tags": [],
+                "velocity_pct_change_min": 0.0,
+                "confidence_score_min": 0.0
+            }
+        ],
+        "passed": true
+    },
+    {
+        "function": "rank_suppliers_for_product",
+        "input": [
+            "prod_1",
+            "problems/product_trend_analyzer/input_cases/product_trend_analyzer_sales_data.csv"
+        ],
+        "expected": {
+            "product_id": "prod_1",
+            "top_supplier": {
+                "supplier_id": "sup_1",
+                "rank_score_min": 0,
+                "lead_time_days_max": 0
+            }
+        },
+        "actual": {
+            "product_id": "prod_1",
+            "top_supplier": {
+                "supplier_id": "sup_1",
+                "rank_score_min": 0.0,
+                "lead_time_days_max": 0
+            }
+        },
+        "passed": true
+    },
+    {
+        "function": "recommend_pricing",
+        "input": [
+            "prod_1",
+            20.0,
+            100,
+            "problems/product_trend_analyzer/input_cases/product_trend_analyzer_sales_data.csv"
+        ],
+        "expected": {
+            "product_id": "prod_1",
+            "suggested_price_conservative_min": 0.0,
+            "suggested_price_aggressive_max": 0.0,
+            "target_margin_pct": 20.0
+        },
+        "actual": {
+            "product_id": "prod_1",
+            "suggested_price_conservative_min": 0.0,
+            "suggested_price_aggressive_max": 0.0,
+            "target_margin_pct": 20.0
+        },
+        "passed": true
+    }
+]

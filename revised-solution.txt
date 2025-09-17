@@ -1,0 +1,114 @@
+import csv
+import pandas as pd
+from typing import List, Dict, Any
+
+
+# -------------------------------
+# Load + Schema Validation
+# -------------------------------
+def validate_schema(file_path: str) -> Dict[str, Any]:
+    """Validate that the CSV has the expected columns."""
+    required_columns = ["product_id", "sales_date", "units_sold", "price"]
+    result = {"fatal": False, "errors": []}
+
+    try:
+        df = pd.read_csv(file_path)
+        for col in required_columns:
+            if col not in df.columns:
+                result["errors"].append(f"Missing column: {col}")
+
+        if result["errors"]:
+            result["fatal"] = True
+    except Exception as e:
+        result["fatal"] = True
+        result["errors"].append(str(e))
+
+    return result
+
+
+# -------------------------------
+# Trend Detection
+# -------------------------------
+def detect_trend_candidates(file_path: str, product_ids: List[str], window: int) -> List[Dict[str, Any]]:
+    """
+    Detect sales spikes for given products.
+    A spike is flagged if the last period's units_sold is > threshold% above
+    the rolling mean of the previous period.
+    """
+    df = pd.read_csv(file_path, parse_dates=["sales_date"])
+    df = df.sort_values(by=["product_id", "sales_date"])
+
+    results = []
+    for pid in product_ids:
+        sub = df[df["product_id"] == pid].copy()
+
+        if sub.empty:
+            results.append({
+                "product_id": pid,
+                "is_spike_candidate": False,
+                "reason_tags": ["no_data"],
+                "velocity_pct_change_min": 0.0,
+                "confidence_score_min": 0.0
+            })
+            continue
+
+        sub["rolling_mean"] = sub["units_sold"].rolling(window=window, min_periods=1).mean()
+        sub["pct_change"] = (sub["units_sold"] - sub["rolling_mean"]) / sub["rolling_mean"] * 100
+
+        latest = sub.iloc[-1]
+        spike = latest["pct_change"] > 20  # Example: 20% threshold
+
+        results.append({
+            "product_id": pid,
+            "is_spike_candidate": bool(spike),
+            "reason_tags": ["spike_detected"] if spike else [],
+            "velocity_pct_change_min": float(round(latest["pct_change"], 2)),
+            "confidence_score_min": float(1.0 if spike else 0.5)  # toy confidence
+        })
+
+    return results
+
+
+# -------------------------------
+# Pricing Recommendation
+# -------------------------------
+def recommend_pricing(product_id: str, target_margin_pct: float, units: int, file_path: str) -> Dict[str, Any]:
+    """
+    Suggest conservative and aggressive prices based on historical average price
+    and desired margin.
+    """
+    df = pd.read_csv(file_path)
+    sub = df[df["product_id"] == product_id]
+
+    if sub.empty:
+        return {
+            "product_id": product_id,
+            "suggested_price_conservative_min": 0.0,
+            "suggested_price_aggressive_max": 0.0,
+            "target_margin_pct": target_margin_pct,
+        }
+
+    avg_price = sub["price"].mean()
+
+    conservative_price = avg_price * (1 + target_margin_pct / 100 * 0.5)  # half target
+    aggressive_price = avg_price * (1 + target_margin_pct / 100 * 1.5)  # overshoot target
+
+    return {
+        "product_id": product_id,
+        "suggested_price_conservative_min": round(conservative_price, 2),
+        "suggested_price_aggressive_max": round(aggressive_price, 2),
+        "target_margin_pct": target_margin_pct,
+    }
+
+
+# -------------------------------
+# Example Run
+# -------------------------------
+if __name__ == "__main__":
+    csv_file_path = "problems/product_trend_analyzer/input_cases/product_trend_analyzer_sales_data.csv"
+
+    print("Schema:", validate_schema(csv_file_path))
+    print("Trends:", detect_trend_candidates(csv_file_path, ["prod_1", "prod_2", "prod_3"], 30))
+    print("Pricing:", recommend_pricing("prod_1", 20.0, 100, csv_file_path))
+
+
